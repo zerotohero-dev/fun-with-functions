@@ -1,507 +1,134 @@
-/*
+'use strict';
 
-                                .-') _   ,-.,-.
-                               ( OO ) ) /  ||  \
-       ,------.,--. ,--.   ,--./ ,--,' '  .''.  '
-    ('-| _.---'|  | |  |   |   \ |  |\ |  |  |  |
-    (OO|(_\    |  | | .-') |    \|  | )|  |  |  |
-    /  |  '--. |  |_|( OO )|  .     |/ |  |  |  |
-    \_)|  .--' |  | | `-' /|  |\    |  '  '..'  '
-      \|  |_) ('  '-'(_.-' |  | \   |   \  ||  /
-       `--'     `-----'    `--'  `--'    `-'`-'
+var fn = require('./fn'),
+    data = require('./reddit');
 
-    Functional Programmming Is Fun!
+function testToArray() {
+    var ar = fn.toArray(arguments);
 
-    (with bite-sized examples, without going into gruesome techincality)
+    return ar;
+}
 
- */
+//console.log( testToArray(1, 2, 3) );
 
-//  It's all about Abstraction
+// if (!isNaN(foo)) {}
 
-(function() {
-    'use strict';
+var isNumber = fn.invert(isNaN);
 
-    function sum(limit) {
-        var total = 0, count = 1;
+// console.log( isNumber(12) );
 
-        while (count <= limit) {
-            total += count;
-            count += 1;
-        }
 
-        return total;
-    }
 
-    function betterSum(limit) {
-        return add(range(0, limit));
-    }
+function sum(a, b) {
+    return a + b;
+}
 
-    function add(collection) {
-        return collection.reduce(function(num, acc) {
-            return num + acc;
-        }, 0);
-    }
+var shiftedSum = fn.shift(sum, 2);
 
-    function range(begin, end) {
-        var i, result = [];
+// console.log( shiftedSum(10, 30, 40, 50) );
 
-        for (i = begin; i <= end; i++) {
-            result.push(i);
-        }
 
-        return result;
-    }
-}());
+function divide(a, b) {
+    return a / b;
+}
 
-// #
-// # Higher Order Functions
-// #
+var reversedDivide = fn.reverse(divide);
 
-//
-// The above example was "abstraction over values".
-//
-// Higher-order functions allow us to abstract over "actions",
-// not just the values.
-//
+//console.log( reversedDivide( 10, 50 ) );
 
-// ##
-// ## Basics
-// ##
+function getData(data) {
+    return data.data;
+}
 
-(function() {
-    'use strict';
+function getChildren(data) {
+    return data.children;
+}
 
-    // At its very basic...
+function getFirstChildData(data) {
+    return data[0].data;
+}
 
-    function eatBurrito() {}
+function getAuthor(data) {
+    return data.author;
+}
 
-    function eat() {return eatBurrito;}
+var getFirstAuthor = fn.compose( getAuthor, getFirstChildData, getChildren, getData );
 
-    eatBurrito();
+//console.log( getFirstAuthor(data) );
 
-    eat()();
 
-    // Higher order functions are just like burritos:
-    // The consumer will never know that the function has before consuming it.
-    //
-    // Also, higher order functions are kind of lazy:
-    // Instead of executing it right now ,we create a 'computation'
-    // to be executed later.
+var getFirstAuthorSeq = fn.sequence(getData, getChildren, getFirstChildData, getAuthor);
+
+//console.log( getFirstAuthorSeq(data) );
+
+
+var children = getChildren(getData(data));
+
+//console.log( children.length );
+
+fn.each(children, function(child) {
+    //console.log(child.data.permalink);
 });
 
-// ##
-// ## Applications
-// ##
+//var scores = children.map(function(child) {
+//    return {id: child.data.id, score: child.data.ups - child.data.downs};
+//});
 
-(function() {
-    'use strict';
-
-    var blueprints = {
-        cupboardUnderTheStairs: function() {
-            return {
-                area: 130,
-                windows: 0,
-                hasAc: false,
-                bed: 1,
-                bath: 0
-            };
-        },
-
-        matchBox: function() {
-            return {
-                area: 150,
-                windows: 4,
-                hasAc: true,
-                bed: 1,
-                bath: 1
-            };
-        }
-    };
-
-    function computeRental(houseJson) {
-        return houseJson.area * (
-            houseJson.windows + houseJson.bed + houseJson.bath
-        ) + houseJson.hasAc ? 300 : 0;
-    }
-
-    function computeRentFromBluePrint(blueprint) {
-        return computeRental(blueprint());
-    }
-
-    /*
-     * Look Ma!
-     * I'm passing a function to a function, and returning another function.
-     * Functions are soooo first-class citizens.
-     * I'm lovin' them!
-     */
-    var rentCalculator = function(blueprint) {
-        return function() {
-            return computeRentFromBluePrint(blueprint);
-        };
-    };
-
-    var cupboardRentCalculator = rentCalculator(
-        blueprints.cupboardUnderTheStairs
-    );
-
-    cupboardRentCalculator(); // gives you the rent estimate.
+var scores = fn.map(children, function(child) {
+   return {id: child.data.id, score: child.data.ups - child.data.downs};
 });
 
+// console.log(scores);
 
-(function() {
-    'use strict';
 
-    function greaterThan(m) {
-      return function(m) { return m > n; };
-    }
-
-    var greaterThanTen = greaterThan(10);
-
-    // Note:
-    // There are more clever ways of doing this,
-    // but this one is the gist of it.
-
-    function spyOn(f, context, name) {
-        return function() {
-            console.log('Calling ' + name);
-
-            var result = f.apply(context, arguments);
-
-            console.log('Called ' + name);
-            console.log('Called with: ' + arguments);
-            console.log('The result is: ' + result);
-
-            return result;
-        };
-    }
-
-    spiedFn = spyOn(greaterThan, {}, 'greaterThanTen');
-
-    spiedFn(12);
-}());
-
-// #
-// # Reflection
-// #
-
-(funciton() {
-    'use strict';
-
-    function multiply(a, b) {
-        return a * b;
-    }
-
-    function power(up) {
-        return Math.pow(this.base, up);
-    }
-
-    function callMultiply(a, b) {
-        return multiply.call(null, a, b);
-    }
-
-    function applyMultiply(a, b) {
-        return multiply.apply(null, [a, b]);
-    }
-
-    function callPowerOfTwo(n) {
-        return power.call({base: 2}, n);
-    }
-
-    function applyPowerOfTwo() {
-        return power.apply({base: 2}, arguments);
-    }
-
-    applyPowerOfTwo(42);
-}());
-
-// #
-// # Closures
-// #
-
-(function() {
-    'use strict';
-
-    function sayHello(name) {
-        var text = 'Hello ' + name;
-
-        function sayMyName() { console.log(text); }
-
-        sayMyName();
-    }
-
-    function sayHello2(name) {
-        var text = 'Hello ' + name;
-
-        function sayMyName() { console.log(text); }
-
-        return sayMyName;
-    }
-
-    // Cover it in the next session.
-    function buildList(list) {
-        var result = [];
-
-        for (var i = 0; i < list.length; i++) {
-            var item = 'item' + list[i];
-
-            result.push( function() {console.log(item + ' ' + list[i])} );
-        }
-
-        return result;
-    }
-
-    function testList() {
-        var fnlist = buildList([1,2,3]);
-
-        // using j only to help prevent confusion - could use i
-        for (var j = 0; j < fnlist.length; j++) {
-            fnlist[j]();
-        }
-    }
-}());
-
-// #
-// # Curried Fries and Partial Potatoes
-// #
-
-(function() {
-    function add(a, b) {return a + b;}
-
-    function makeAdder(a) {
-        return function(b) {
-            return add(a, b);
-        }
-    }
-
-    var addFive = makeAdder(5);
-
-    addFive(12);
-
-    function bindFirstArg(fn, a) {
-        return function(b) {
-            return fn(a, b);
-        };
-    }
-
-    eat()();
-
-    bindFirstArg(add, 12)(15);
-
-    var addOne = bindFirstArg(1);
-
-    function createAdder = bindFirstArg(bindFirstArg, 1);
-
-    var newAddOne = createAdder(1);
-
-    function partial(fn /*, args...*/) {
-        var slice = Array.prototype.slice,
-            args = slice.call(arguments, 1);
-
-        return function() {
-            return fn.apply(
-                this,
-                args.concat(slice.call(arguments))
-            );
-        }
-    }
-
-    var partialAdd = partial(add, 5);
-
-    partialAdd(6);
-
-    // Sounds like Haskell.
-    // Double check.
-    function curry(fn, n) {
-
-        // To manually override "arity".
-        if (typeof n !== 'number') {
-            n = fn.length;
-        }
-
-        function getCurriedFn(prev) {
-            return function(arg) {
-                var args = prev.concat(arg);
-
-                if (args.length < n) {
-                    return getCurriedFn(args);
-                } else {
-                    return fn.apply(this, args);
-                }
-            };
-        }
-
-        return getCurriedFn([]);
-    }
-
-    // function bozo() {
-    //     arguments[1] =
-    // }
-
-    Function.prototype.bind;
-
-
-    function add(a, b, c) {
-        var sum = a + b + c;
-        return a + ' + ' + b + ' + ' + c + ' = ' + sum;
-    }
-
-    var boundAdd = add.bind(null, 12, 13);
-
-    boundAdd(15);
-
-    add(1, 2, 3);
-
-    var curriedAdd = curry(add);
-
-    var halfAdd = curiedAdd(1);
-
-    var anotherAdd = halfAdd(5);
-
-    anotherAdd(12);
-
-    //halfAdd(3);
-
-    var addOnePartial = partial(add, 1);
-
-    addOnePartial(2, 3); // "1 + 2 + 3 = 6"
-    addOnePartial(2);    // "1 + 2 + undefined = NaN"
-
-    var addOneCurried = curry(add)(1);
-
-    // Now this looks "much" like Haskell.
-    addOneCurried(2)(3);
-
-    var addCurriedMore = addOneCurried(2);
-
-    addCurriedMore(3);
-}());
-
-// #
-// # Apply and Bind
-// #
-
-(function() {
-    'use strict';
-
-    //var prop = 123;
-
-    var obj = {
-        prop: 1,
-        add: function(a, b) {
-            var sum = this.prop + a + b;
-
-            return this.prop + ' + ' + a + ' + ' + b + ' = ' + sum;
-        }
-    };
-
-    obj.add(2, 3);
-
-    var add = obj.add;
-
-    add.call(obj, 4, 5);
-    ddd.apply(obj, [6, 7]);
-
-    var goodAdd = obj.add.bind(obj);
-
-    badAdd = obj.add;
-
-    badAdd(12, 15);
-
-    goodAdd(8, 9);
-
-    var goodAddEvenMore = obj.add.bind(obj, 10);
-
-    goodAddEvenMore(11);
-
-    obj.prop = 99;
-    goodAdd(5, 6);
-
-    goodAddEvenMore(7);
-})();
-
-//
-// WARNING:
-//
-// You may need to revisit the stuff below.
-//
-// It's kind of fun, in a "complicated" way.
-//
-
-(function() {
-    'use strict';
-
-    // add.bind({}, 2, 3);
-    //
-    // is the same as
-    //                            //ctxFn, ctx, varargin
-    // Function.prototype.bind.call(add, {}, 2, 3)
-    //
-    // similarly
-    //
-    // Function.prototype.apply.call(add, {}, [2, 3]);
-    //
-    // Function.prototype.apply.bind(add, {}, [2, 3]);
-    //
-    // if just a higher order cousin.
-    //
-    // add.call({}, 2, 3);
-    //
-    // is the same as.
-    //                              ctx   args...
-    // Function.prototype.call.bind(add, {}, 2, 3)()
-    // Function.prototype.call.bind(fn, ctx, args)
-    // ( fn.call(ctx, args) )
-    //
-    // Replace add with Function.prototype.bind
-    //
-    // Function.prototype.call.bind(Function.prototype.bind)
-    //
-    // Function.prototype.call.bind(
-    //      Function.prototype.apply)(add, {}, [2, 3])
-
-    // "Voila!" Monment>
-
-    var bind = Function.prototype.call.bind(Function.prototype.bind),
-        call = bind(Function.prototype.call, Function.prototype.call),
-        apply = bind(Function.prototype.call, Function.prototype.apply);
-
-    // Function.prototype.bind.call(fn, ctx, varargin)
-    // Function.prototype.bind.call(fpc, fpc) (fn, ctx, varargin)
-    // Function.prototype.bind.call(Function.prototype.call, Function.prototype.apply)
-    // Function.prototype.call.bind(Function.prototype.apply, fn, ctx, [args])
-    // ( Function.prototype.apply.call(fn, ctx, [args]) )
-}());
-
-(function() {
-    'use strict';
-
-    // Function.prototype.bind.call(fn, ctx, varargin)
-    // ( fn.call(ctx, varargin) )
-
-    // Instead of having to use slice.call every time...
-    var args = Array.prototype.slice.call(arguments);
-
-    // You can just use slice without .call by binding slice to call!
-    var toArray = Function.prototype.call.bind(Array.prototype.slice);
-
-    args = toArray(arguments);
-
-    Math.max(15, -10, 0, 5, 10); // 15
-
-    Math.max([15, -10, 0, 5, 10]); // NaM!
-
-    var newMax = Function.prototype.apply.bind(Math.max)
-
-    newMax([15, -10, 0, 5 ,10]); // 15! Voila!
+var above2k = fn.filter(scores, function(meta) {
+    return meta.score > 2000;
 });
 
-/*
- * This is just the beginning :)
- */
+var below2k = fn.filter(scores, function(meta) {
+    return meta.score <= 2000;
+});
 
-// These (and more) will be the topics of the next session.
-// Map, Reduce, Filter
-// Recursion
-// Trampolines
-// Thunks (maybe)
+// console.log('-----');
+// console.log(below2k);
 
+var hasSomeAbove2k = fn.some(scores, function(meta) {
+    return meta.score > 2000;
+});
+
+var hasAllAbove2k = fn.every(scores, function(meta) {
+    return meta.score > 2000;
+});
+
+//console.log(hasSomeAbove2k);
+//console.log(hasAllAbove2k);
+
+var merged = [above2k, below2k];
+
+var flattened = fn.flatten(merged);
+
+// console.log('--------');
+// console.log(flattened);
+
+var mapped = fn.flatMap(merged, function(ar) {
+   return fn.map(ar, function(el) {
+       return el.id + '-' + el.score;
+   });
+});
+
+// console.log('--------');
+// console.log(mapped);
+
+
+var reduced = fn.reduce(mapped, function(acc, current) {
+    return acc + parseInt(current.split('-')[1], 10);
+}, 0);
+
+//console.log('--------');
+//console.log( reduced );
+
+var zipped = fn.zip(above2k, below2k, function(a, b) {
+   return JSON.stringify(a) + '--' + JSON.stringify(b);
+});
+
+console.log(zipped);
